@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>AlphaVoice</title>
+  <style>
+    :root {
+      --system-gray: #f5f5f7;
+      --system-blue: #007aff;
+      --system-red: #ff3b30;
+      --sidebar-bg: #e8e8ed;
+      --content-bg: #ffffff;
+      --text-color: #1d1d1f;
+      --border-color: #d2d2d7;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--content-bg);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 150px;
+      background-color: var(--sidebar-bg);
+      padding-top: 40px;
+      /* Space for traffic lights */
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-item {
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #4a4a4a;
+    }
+
+    .nav-item.active {
+      background-color: rgba(0, 0, 0, 0.05);
+      color: var(--text-color);
+      font-weight: 500;
+      border-left: 4px solid var(--system-blue);
+    }
+
+    /* Content */
+    .content {
+      flex: 1;
+      padding: 40px 30px;
+      overflow-y: auto;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    h2 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #666;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 13px;
+      box-sizing: border-box;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--system-blue);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+    }
+
+    button {
+      background-color: var(--system-blue);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    button:hover {
+      background-color: #0071e3;
+    }
+
+    button.secondary {
+      background-color: #e5e5e5;
+      color: #333;
+    }
+
+    /* Status & Stats */
+    .status-card {
+      background: var(--system-gray);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .status-text {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .status-sub {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .recording {
+      color: var(--system-red);
+      animation: pulse 1.5s infinite;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .stat-box {
+      background: var(--system-gray);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--system-blue);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .shortcut-recorder {
+      display: flex;
+      gap: 10px;
+    }
+
+    .shortcut-display {
+      flex: 1;
+      padding: 8px;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      text-align: center;
+      font-family: monospace;
+      font-size: 14px;
+    }
+
+    /* Draggable header area */
+    .titlebar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 30px;
+      -webkit-app-region: drag;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="titlebar"></div>
+
+  <div class="sidebar">
+    <div class="nav-item active" data-target="general">General</div>
+    <div class="nav-item" data-target="shortcuts">Shortcuts</div>
+    <div class="nav-item" data-target="stats">Statistics</div>
+  </div>
+
+  <div class="content">
+
+    <!-- General Settings -->
+    <div id="general" class="section active">
+      <h1>General</h1>
+
+      <div class="status-card">
+        <div id="status" class="status-text">Ready</div>
+        <div class="status-sub">Press shortcut to start</div>
+      </div>
+
+      <div class="form-group">
+        <label for="provider">AI Provider</label>
+        <select id="provider">
+          <option value="openai">OpenAI (Paid)</option>
+          <option value="groq">Groq (Free Beta)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="apiKey">API Key</label>
+        <input type="password" id="apiKey" placeholder="sk-..." />
+        <div style="margin-top: 5px; font-size: 11px;">
+          <a href="#" id="keyLink">Get API Key</a>
+        </div>
+      </div>
+
+      <button id="saveBtn">Save Changes</button>
+      <div id="msg" style="margin-top: 10px; font-size: 12px;"></div>
+    </div>
+
+    <!-- Shortcuts -->
+    <div id="shortcuts" class="section">
+      <h1>Shortcuts</h1>
+      <div class="form-group">
+        <label>Toggle Recording</label>
+        <div class="shortcut-recorder">
+          <input type="text" id="shortcutInput" value="Option+Space" readonly />
+          <button id="recordShortcutBtn" class="secondary">Record</button>
+        </div>
+        <p style="font-size: 11px; color: #888; margin-top: 5px;">Click Record and press your desired key combination.
+        </p>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div id="stats" class="section">
+      <h1>Statistics</h1>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="totalWords">0</div>
+          <div class="stat-label">Total Words</div>
+        </div>
+        <!-- Placeholder for future stats -->
+        <div class="stat-box">
+          <div class="stat-value" id="timeSaved">0m</div>
+          <div class="stat-label">Time Saved (est)</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+
+</html>

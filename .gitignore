@@ -1,0 +1,15 @@
+# Node
+node_modules/
+
+# Build artifacts
+out/
+make/
+
+# macOS
+.DS_Store
+
+# Env
+.env
+
+# Package lock
+package-lock.json
