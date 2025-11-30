@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .indicator {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .indicator.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Persistent state styles */
+        .indicator.idle {
+            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .indicator.idle .dot {
+            background-color: #32d74b;
+            /* Green for ready */
+            box-shadow: 0 0 5px #32d74b;
+            animation: none;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ff3b30;
+            box-shadow: 0 0 8px #ff3b30;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-text {
+            opacity: 0.9;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="indicator" class="indicator">
+        <div class="dot"></div>
+        <div class="status-text" id="text">Recording</div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        const indicator = document.getElementById('indicator');
+        const text = document.getElementById('text');
+
+        ipcRenderer.on('update-indicator-status', (event, status) => {
+            indicator.classList.add('visible');
+            indicator.classList.remove('idle');
+
+            if (status === 'recording') {
+                text.textContent = 'Listening...';
+                // Remove idle class
+            } else if (status === 'processing') {
+                text.textContent = 'Processing...';
+            } else {
+                // Idle state
+                text.textContent = 'Ready';
+                indicator.classList.add('idle');
+            }
+        });
+    </script>
+</body>
+
+</html>

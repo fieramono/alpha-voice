@@ -1,6 +1,10 @@
 module.exports = {
     packagerConfig: {
-        icon: './icon' // Assumes icon.icns exists, but we might not have it.
+        icon: './icon',
+        extraResource: [
+            './iconTemplate.svg',
+            './iconRecordingTemplate.svg'
+        ]
     },
     rebuildConfig: {},
     makers: [

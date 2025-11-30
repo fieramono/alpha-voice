@@ -11,6 +11,12 @@ const shortcutInput = document.getElementById('shortcutInput');
 const recordShortcutBtn = document.getElementById('recordShortcutBtn');
 const totalWordsEl = document.getElementById('totalWords');
 const timeSavedEl = document.getElementById('timeSaved');
+const showIndicatorCheckbox = document.getElementById('showIndicator');
+
+if (!window.electronAPI) {
+    console.error('Electron API missing');
+    document.body.innerHTML = '<h1 style="color:red;padding:20px">Error: API Missing. Preload failed.</h1>';
+}
 
 // State
 let currentShortcut = 'Option+Space';
@@ -33,6 +39,7 @@ window.electronAPI.onLoadConfig((config) => {
     providerSelect.value = config.provider || 'openai';
     currentShortcut = config.shortcut || 'Option+Space';
     shortcutInput.value = currentShortcut;
+    showIndicatorCheckbox.checked = config.showIndicator !== false;
     updateLinks();
 });
 
@@ -63,21 +70,37 @@ saveBtn.addEventListener('click', () => {
     const config = {
         key: apiKeyInput.value.trim(),
         provider: providerSelect.value,
-        shortcut: currentShortcut
+        shortcut: currentShortcut,
+        showIndicator: showIndicatorCheckbox.checked
     };
 
     window.electronAPI.saveConfig(config);
 
-    msgEl.textContent = 'Settings saved!';
+    window.electronAPI.saveConfig(config);
+});
+
+window.electronAPI.onShortcutRegistered((shortcut) => {
+    msgEl.textContent = `Settings saved! Shortcut '${shortcut}' active.`;
     msgEl.style.color = 'green';
     setTimeout(() => msgEl.textContent = '', 3000);
 });
 
 // Shortcut Recording
 recordShortcutBtn.addEventListener('click', () => {
-    isRecordingShortcut = true;
-    recordShortcutBtn.textContent = 'Press keys...';
-    recordShortcutBtn.classList.add('recording');
+    if (isRecordingShortcut) {
+        // Stop recording manually
+        isRecordingShortcut = false;
+        recordShortcutBtn.textContent = 'Record';
+        recordShortcutBtn.classList.remove('recording');
+        // Keep current value
+        currentShortcut = shortcutInput.value;
+    } else {
+        // Start recording
+        isRecordingShortcut = true;
+        recordShortcutBtn.textContent = 'Stop';
+        recordShortcutBtn.classList.add('recording');
+        shortcutInput.value = '';
+    }
 });
 
 document.addEventListener('keydown', (e) => {
@@ -92,15 +115,26 @@ document.addEventListener('keydown', (e) => {
 
     let key = e.key.toUpperCase();
     if (key === ' ') key = 'Space';
-    if (['META', 'CONTROL', 'ALT', 'SHIFT'].includes(key)) return; // Wait for non-modifier
 
-    const shortcut = [...modifiers, key].join('+');
-    currentShortcut = shortcut;
+    // Don't add modifier keys as the "main" key
+    if (['META', 'CONTROL', 'ALT', 'SHIFT'].includes(key)) {
+        key = null;
+    }
+
+    // Build current combo string for display
+    let shortcutParts = [...modifiers];
+    if (key) shortcutParts.push(key);
+
+    const shortcut = shortcutParts.join('+');
     shortcutInput.value = shortcut;
 
-    isRecordingShortcut = false;
-    recordShortcutBtn.textContent = 'Record';
-    recordShortcutBtn.classList.remove('recording');
+    // Only finalize if a non-modifier key is pressed
+    if (key) {
+        currentShortcut = shortcut;
+        isRecordingShortcut = false;
+        recordShortcutBtn.textContent = 'Record';
+        recordShortcutBtn.classList.remove('recording');
+    }
 });
 
 // Recording Status
